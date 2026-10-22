@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>85 Years in Weeks</title>
+    <style>
+        html, body {
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            padding: 10px 20px;
+        }
+
+        h1 {
+            margin: 0 0 2px 0;
+            font-size: 1.3rem;
+        }
+
+        p.subtitle {
+            color: #666;
+            margin: 0 0 6px 0;
+            font-size: 0.8rem;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .legend-box {
+            width: 10px;
+            height: 10px;
+            border-radius: 1px;
+        }
+
+        .stats {
+            background: white;
+            padding: 3px 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+        }
+
+        .grid-container {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 96vw;
+            box-sizing: border-box;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(52, 1fr);
+            grid-template-rows: repeat(85, 1fr);
+            gap: 2px;
+            width: 100%;
+            height: 72vh;
+        }
+
+        .cell {
+            background-color: #e2e8f0;
+            border-radius: 0.5px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .cell:hover {
+            transform: scale(1.4);
+            z-index: 10;
+        }
+
+        .cell.lived {
+            background-color: #3b82f6 !important;
+        }
+
+        /* Modal Pop-up Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            text-align: center;
+            max-width: 300px;
+        }
+
+        .modal-card h3 {
+            margin: 0 0 8px 0;
+            color: #1e293b;
+        }
+
+        .modal-card p {
+            margin: 0 0 15px 0;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .modal-card button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .modal-card button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="mainTitle">85 Years in Weeks</h1>
+    <p class="subtitle" id="subtitle">Loading...</p>
+    
+    <div class="legend" id="legendContainer">
+        <div class="legend-item">
+            <div class="legend-box" style="background-color: #3b82f6;"></div>
+            <span id="legendLived">Lived Weeks</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background-color: #e2e8f0;"></div>
+            <span id="legendUnlived">Unlived Weeks</span>
+        </div>
+    </div>
+
+    <div class="stats" id="stats">
+        <span id="statsLabel">Lived:</span> <span id="count">0</span> / 4,420 weeks (<span id="percentage">0</span>%)
+    </div>
+
+    <div class="grid-container">
+        <div class="grid" id="grid"></div>
+    </div>
+
+    <!-- Pop-up Modal Container -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-card">
+            <h3 id="modalTitle">Week 1</h3>
+            <p id="modalText">Details here</p>
+            <button id="modalClose">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Language dictionaries
+        const i18n = {
+            en: {
+                title: "85 Years in Weeks",
+                subtitle: "Week 1 starts on your birthdate: ",
+                legendLived: "Lived Weeks",
+                legendUnlived: "Unlived Weeks",
+                statsLived: "Lived:",
+                promptBirth: "What is your birthdate? (YYYY-MM-DD)",
+                statusLived: "Lived",
+                statusUnlived: "Unlived",
+                closeBtn: "Close",
+                weekPrefix: "Week "
+            },
+            es: {
+                title: "85 Años en Semanas",
+                subtitle: "La semana 1 comienza en tu fecha de nacimiento: ",
+                legendLived: "Semanas vividas",
+                legendUnlived: "Semanas por vivir",
+                statsLived: "Vividas:",
+                promptBirth: "¿Cuál es tu fecha de nacimiento? (AAAA-MM-DD)",
+                statusLived: "Vivida",
+                statusUnlived: "Por vivir",
+                closeBtn: "Cerrar",
+                weekPrefix: "Semana "
+            },
+            nl: {
+                title: "85 Jaar in Weken",
+                subtitle: "Week 1 begint op je geboortedatum: ",
+                legendLived: "Geleefde weken",
+                legendUnlived: "Nog te leven weken",
+                statsLived: "Geleefd:",
+                promptBirth: "Wat is je geboortedatum? (JJJJ-MM-DD)",
+                statusLived: "Geleefd",
+                statusUnlived: "Nog niet geleefd",
+                closeBtn: "Sluiten",
+                weekPrefix: "Week "
+            }
+        };
+
+        // Step 1: Prompt for Language
+        let langChoice = prompt("Select language / Seleccione idioma / Selecteer taal:\nType 'en' for English, 'es' for Español, or 'nl' for Nederlands", "en");
+        if (!langChoice || !i18n[langChoice.toLowerCase()]) {
+            langChoice = 'en';
+        } else {
+            langChoice = langChoice.toLowerCase();
+        }
+
+        const t = i18n[langChoice];
+
+        // Apply static texts based on language
+        document.getElementById('mainTitle').textContent = t.title;
+        document.getElementById('legendLived').textContent = t.legendLived;
+        document.getElementById('legendUnlived').textContent = t.legendUnlived;
+        document.getElementById('statsLabel').textContent = t.statsLived;
+        document.getElementById('modalClose').textContent = t.closeBtn;
+        document.title = t.title;
+
+        // Step 2: Prompt for Birthdate
+        let birthInput = prompt(t.promptBirth, "1990-01-01");
+        let birthDate = new Date(birthInput);
+
+        if (isNaN(birthDate.getTime())) {
+            birthDate = new Date("1990-01-01");
+        }
+
+        const totalWeeks = 85 * 52;
+        const gridEl = document.getElementById('grid');
+        const countEl = document.getElementById('count');
+        const percentageEl = document.getElementById('percentage');
+        const subtitleEl = document.getElementById('subtitle');
+        
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalText = document.getElementById('modalText');
+        const modalClose = document.getElementById('modalClose');
+
+        // Calculate lived weeks
+        const today = new Date();
+        const diffInMs = today - birthDate;
+        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+        let livedWeeksCount = Math.floor(diffInDays / 7);
+
+        if (livedWeeksCount < 0) livedWeeksCount = 0;
+        if (livedWeeksCount > totalWeeks) livedWeeksCount = totalWeeks;
+
+        countEl.textContent = livedWeeksCount;
+        percentageEl.textContent = ((livedWeeksCount / totalWeeks) * 100).toFixed(1);
+        
+        function formatDate(date) {
+            let locale = 'en-US';
+            if (langChoice === 'es') locale = 'es-ES';
+            if (langChoice === 'nl') locale = 'nl-NL';
+            return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        subtitleEl.textContent = t.subtitle + formatDate(birthDate);
+
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        // Generate grid cells
+        for (let i = 0; i < totalWeeks; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+
+            if (i < livedWeeksCount) {
+                cell.classList.add('lived');
+            }
+
+            const weekNum = i + 1;
+            const weekStart = addDays(birthDate, i * 7);
+            const weekEnd = addDays(weekStart, 6);
+            const isLived = i < livedWeeksCount;
+
+            cell.addEventListener('click', () => {
+                modalTitle.textContent = t.weekPrefix + weekNum;
+                modalText.innerHTML = `${formatDate(weekStart)} – ${formatDate(weekEnd)}<br><br><strong>Status:</strong> ${isLived ? t.statusLived : t.statusUnlived}`;
+                modalOverlay.classList.add('active');
+            });
+
+            gridEl.appendChild(cell);
+        }
+
+        modalClose.addEventListener('click', () => {
+            modalOverlay.classList.remove('active');
+        });
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.classList.remove('active');
+            }
+        });
+    </script>
+
+</body>
+</html>
