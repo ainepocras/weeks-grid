@@ -7,6 +7,7 @@
     <style>
         :root {
             --bg: #f4f4f9;
+            --bg-accent: #eef6ff;
             --panel: #ffffff;
             --ink: #1f2937;
             --muted: #64748b;
@@ -28,7 +29,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
+            background: linear-gradient(180deg, var(--bg-accent) 0%, var(--bg) 26%, var(--bg) 100%);
             color: var(--ink);
             display: flex;
             align-items: center;
@@ -91,17 +92,26 @@
             color: var(--ink);
         }
 
+        .field select:focus,
+        .field input:focus,
+        .controls button:focus,
+        .modal-card button:focus {
+            outline: 2px solid rgba(59, 130, 246, 0.3);
+            outline-offset: 2px;
+        }
+
         .controls button {
             background: var(--lived-blue);
             color: white;
             border: none;
             cursor: pointer;
-            transition: filter 0.15s ease;
+            transition: filter 0.15s ease, transform 0.12s ease;
             min-width: 92px;
         }
 
         .controls button:hover {
             filter: brightness(0.96);
+            transform: translateY(-1px);
         }
 
         .legend {
@@ -159,14 +169,19 @@
             width: 100%;
             height: min(72vh, 760px);
             min-height: 420px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 4px;
+            padding: 2px;
+            background: rgba(148, 163, 184, 0.08);
         }
 
         .cell {
             background-color: var(--older);
             border-radius: 0.5px;
             cursor: pointer;
-            transition: transform 0.12s ease, box-shadow 0.12s ease;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
             min-width: 0;
+            border: 1px solid rgba(148, 163, 184, 0.08);
         }
 
         .cell.young {
@@ -181,6 +196,7 @@
             transform: scale(1.35);
             z-index: 10;
             box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+            filter: saturate(1.08);
         }
 
         .cell.lived {
@@ -308,7 +324,7 @@
         </div>
 
         <div class="stats" id="stats">
-            <span id="statsLabel">Lived:</span> <span id="count">0</span> / 4,420 weeks (<span id="percentage">0</span>%)
+            <span id="statsLabel">Lived:</span> <span id="count">0</span> / 4,420 weeks (<span id="percentage">0</span>%) <span id="ageInfo">• Age: 0 years</span>
         </div>
 
         <div class="grid-container">
@@ -338,7 +354,8 @@
                 closeBtn: "Close",
                 weekPrefix: "Week ",
                 statusLived: "Lived",
-                statusUnlived: "Unlived"
+                statusUnlived: "Unlived",
+                ageLabel: "Age:"
             },
             es: {
                 title: "85 Años en Semanas",
@@ -352,7 +369,8 @@
                 closeBtn: "Cerrar",
                 weekPrefix: "Semana ",
                 statusLived: "Vivida",
-                statusUnlived: "Por vivir"
+                statusUnlived: "Por vivir",
+                ageLabel: "Edad:"
             },
             nl: {
                 title: "85 Jaar in Weken",
@@ -366,7 +384,8 @@
                 closeBtn: "Sluiten",
                 weekPrefix: "Week ",
                 statusLived: "Geleefd",
-                statusUnlived: "Nog niet geleefd"
+                statusUnlived: "Nog niet geleefd",
+                ageLabel: "Leeftijd:"
             }
         };
 
@@ -378,6 +397,7 @@
         const gridEl = document.getElementById("grid");
         const countEl = document.getElementById("count");
         const percentageEl = document.getElementById("percentage");
+        const ageInfoEl = document.getElementById("ageInfo");
         const subtitleEl = document.getElementById("subtitle");
         const languageSelect = document.getElementById("languageSelect");
         const birthInput = document.getElementById("birthInput");
@@ -464,12 +484,27 @@
             return parseLocalDate(birthInput.value);
         }
 
+        function getAgeYears(birthDate) {
+            const now = new Date();
+            let years = now.getFullYear() - birthDate.getFullYear();
+            const hasNotHadBirthday =
+                now.getMonth() < birthDate.getMonth() ||
+                (now.getMonth() === birthDate.getMonth() && now.getDate() < birthDate.getDate());
+
+            if (hasNotHadBirthday) years -= 1;
+            return Math.max(years, 0);
+        }
+
         function renderGrid(birthDate, lang) {
             const today = new Date();
             const diffInMs = today - birthDate;
             const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
             let livedWeeksCount = Math.floor(diffInDays / 7);
             livedWeeksCount = clamp(livedWeeksCount, 0, totalWeeks);
+
+            const t = i18n[lang] || i18n.en;
+            const ageYears = getAgeYears(birthDate);
+            ageInfoEl.textContent = `• ${t.ageLabel} ${ageYears} ${ageYears === 1 ? "year" : "years"}`;
 
             gridEl.innerHTML = "";
 
@@ -488,9 +523,12 @@
                 const weekStart = addDays(birthDate, i * 7);
                 const weekEnd = addDays(weekStart, 6);
                 const isLived = i < livedWeeksCount;
+                const label = `${t.weekPrefix}${weekNum} — ${formatDate(weekStart, lang)} to ${formatDate(weekEnd, lang)} (${isLived ? t.statusLived : t.statusUnlived})`;
+
+                cell.setAttribute("title", label);
+                cell.setAttribute("aria-label", label);
 
                 cell.addEventListener("click", () => {
-                    const t = i18n[lang] || i18n.en;
                     modalTitle.textContent = t.weekPrefix + weekNum;
                     modalText.innerHTML = `${formatDate(weekStart, lang)} – ${formatDate(weekEnd, lang)}<br><br><strong>Status:</strong> ${isLived ? t.statusLived : t.statusUnlived}`;
                     modalOverlay.classList.add("active");
