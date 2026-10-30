@@ -11,9 +11,9 @@
             --ink: #1f2937;
             --muted: #64748b;
             --border: #e2e8f0;
-            --lived: #3b82f6;
-            --lived-young: #1e5db8;
-            --lived-older: #5dbb63;
+            --lived-blue: #3b82f6;
+            --lived-blue-young: #1e5db8;
+            --lived-green: #63b76b;
             --young: #add8e6;
             --older: #d7f5d0;
             --shadow: rgba(15, 23, 42, 0.08);
@@ -92,7 +92,7 @@
         }
 
         .controls button {
-            background: var(--lived);
+            background: var(--lived-blue);
             color: white;
             border: none;
             cursor: pointer;
@@ -137,17 +137,6 @@
             margin-top: 2px;
             font-size: 0.75rem;
             text-align: center;
-        }
-
-        .range-stats {
-            background: var(--panel);
-            padding: 5px 12px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px var(--shadow);
-            margin-top: 2px;
-            font-size: 0.75rem;
-            text-align: center;
-            color: var(--muted);
         }
 
         .grid-container {
@@ -195,15 +184,15 @@
         }
 
         .cell.lived {
-            background-color: var(--lived) !important;
+            background-color: var(--lived-blue) !important;
         }
 
         .cell.lived.young {
-            background-color: var(--lived-young) !important;
+            background-color: var(--lived-blue-young) !important;
         }
 
         .cell.lived.older {
-            background-color: var(--lived-older) !important;
+            background-color: var(--lived-green) !important;
         }
 
         .modal-overlay {
@@ -304,34 +293,22 @@
                 <input id="birthInput" type="date" aria-label="Birthdate">
             </label>
 
-            <label class="field" for="rangeSelect">
-                <span id="rangeLabel">View</span>
-                <select id="rangeSelect" aria-label="Age range selector">
-                    <option value="full">Full lifespan</option>
-                    <option value="age-0-18">Ages 0–18</option>
-                </select>
-            </label>
-
             <button id="applyBtn" type="button">Apply</button>
         </div>
 
         <div class="legend" id="legendContainer">
             <div class="legend-item">
-                <div class="legend-box" style="background-color: #add8e6;"></div>
-                <span id="legendYoung">Age 0–18</span>
+                <div class="legend-box" style="background-color: #3b82f6;"></div>
+                <span id="legendLived">Weeks Lived</span>
             </div>
             <div class="legend-item">
                 <div class="legend-box" style="background-color: #d7f5d0;"></div>
-                <span id="legendUnlived">Weeks Not Yet Lived</span>
+                <span id="legendUnlived">Weeks to Live</span>
             </div>
         </div>
 
         <div class="stats" id="stats">
             <span id="statsLabel">Lived:</span> <span id="count">0</span> / 4,420 weeks (<span id="percentage">0</span>%)
-        </div>
-
-        <div class="range-stats" id="rangeStats">
-            Selected range: <span id="rangeSummary">Full lifespan</span>
         </div>
 
         <div class="grid-container">
@@ -352,62 +329,49 @@
             en: {
                 title: "85 Years in Weeks",
                 subtitle: "Week 1 starts on your birthdate: ",
-                legendYoung: "Age 0–18",
-                legendUnlived: "Weeks Not Yet Lived",
+                legendLived: "Weeks Lived",
+                legendUnlived: "Weeks to Live",
                 statsLived: "Lived:",
                 languageLabel: "Language",
                 birthLabel: "Birthdate",
-                rangeLabel: "View",
-                rangeFull: "Full lifespan",
-                rangeAge0to18: "Ages 0–18",
                 applyBtn: "Apply",
                 closeBtn: "Close",
                 weekPrefix: "Week ",
                 statusLived: "Lived",
-                statusUnlived: "Unlived",
-                selectedRange: "Selected range: "
+                statusUnlived: "Unlived"
             },
             es: {
                 title: "85 Años en Semanas",
                 subtitle: "La semana 1 comienza en tu fecha de nacimiento: ",
-                legendYoung: "Edad 0–18",
-                legendUnlived: "Semanas aún no vividas",
+                legendLived: "Semanas vividas",
+                legendUnlived: "Semanas por vivir",
                 statsLived: "Vividas:",
                 languageLabel: "Idioma",
                 birthLabel: "Fecha de nacimiento",
-                rangeLabel: "Vista",
-                rangeFull: "Toda la vida",
-                rangeAge0to18: "Edades 0–18",
                 applyBtn: "Aplicar",
                 closeBtn: "Cerrar",
                 weekPrefix: "Semana ",
                 statusLived: "Vivida",
-                statusUnlived: "Por vivir",
-                selectedRange: "Rango seleccionado: "
+                statusUnlived: "Por vivir"
             },
             nl: {
                 title: "85 Jaar in Weken",
                 subtitle: "Week 1 begint op je geboortedatum: ",
-                legendYoung: "Leeftijd 0–18",
-                legendUnlived: "Nog niet geleefde weken",
+                legendLived: "Geleefde weken",
+                legendUnlived: "Nog te leven weken",
                 statsLived: "Geleefd:",
                 languageLabel: "Taal",
                 birthLabel: "Geboortedatum",
-                rangeLabel: "Weergave",
-                rangeFull: "Volledige levensduur",
-                rangeAge0to18: "Leeftijd 0–18",
                 applyBtn: "Toepassen",
                 closeBtn: "Sluiten",
                 weekPrefix: "Week ",
                 statusLived: "Geleefd",
-                statusUnlived: "Nog niet geleefd",
-                selectedRange: "Geselecteerd bereik: "
+                statusUnlived: "Nog niet geleefd"
             }
         };
 
         const STORAGE_KEY_LANG = "weeks-grid-language";
         const STORAGE_KEY_BIRTH = "weeks-grid-birthdate";
-        const STORAGE_KEY_RANGE = "weeks-grid-range";
         const totalWeeks = 85 * 52;
         const youthWeeks = 18 * 52;
 
@@ -417,13 +381,11 @@
         const subtitleEl = document.getElementById("subtitle");
         const languageSelect = document.getElementById("languageSelect");
         const birthInput = document.getElementById("birthInput");
-        const rangeSelect = document.getElementById("rangeSelect");
         const applyBtn = document.getElementById("applyBtn");
         const modalOverlay = document.getElementById("modalOverlay");
         const modalTitle = document.getElementById("modalTitle");
         const modalText = document.getElementById("modalText");
         const modalClose = document.getElementById("modalClose");
-        const rangeSummary = document.getElementById("rangeSummary");
 
         function parseLocalDate(dateString) {
             const defaultDate = new Date(1990, 0, 1);
@@ -465,29 +427,17 @@
             return formatLocalDate(parsed);
         }
 
-        function getStoredRange() {
-            const saved = localStorage.getItem(STORAGE_KEY_RANGE);
-            return saved === "age-0-18" ? "age-0-18" : "full";
-        }
-
         function setLanguage(lang) {
             const t = i18n[lang] || i18n.en;
             document.documentElement.lang = lang;
             document.getElementById("mainTitle").textContent = t.title;
-            document.getElementById("legendYoung").textContent = t.legendYoung;
+            document.getElementById("legendLived").textContent = t.legendLived;
             document.getElementById("legendUnlived").textContent = t.legendUnlived;
             document.getElementById("statsLabel").textContent = t.statsLived;
             document.getElementById("languageLabel").textContent = t.languageLabel;
             document.getElementById("birthLabel").textContent = t.birthLabel;
-            document.getElementById("rangeLabel").textContent = t.rangeLabel;
             document.getElementById("modalClose").textContent = t.closeBtn;
             document.title = t.title;
-
-            const fullOption = document.querySelector('#rangeSelect option[value="full"]');
-            const youthOption = document.querySelector('#rangeSelect option[value="age-0-18"]');
-            if (fullOption) fullOption.textContent = t.rangeFull;
-            if (youthOption) youthOption.textContent = t.rangeAge0to18;
-
             languageSelect.value = lang;
         }
 
@@ -511,55 +461,33 @@
         }
 
         function getBirthDateFromInput() {
-            const value = birthInput.value;
-            return parseLocalDate(value);
+            return parseLocalDate(birthInput.value);
         }
 
-        function getRangeConfig(rangeKey, livedWeeksCount) {
-            if (rangeKey === "age-0-18") {
-                const visibleWeeks = Math.min(youthWeeks, livedWeeksCount);
-                return {
-                    key: "age-0-18",
-                    totalWeeks: youthWeeks,
-                    visibleWeeks: visibleWeeks,
-                    label: "Ages 0–18"
-                };
-            }
-
-            return {
-                key: "full",
-                totalWeeks: totalWeeks,
-                visibleWeeks: livedWeeksCount,
-                label: "Full lifespan"
-            };
-        }
-
-        function renderGrid(birthDate, lang, rangeKey) {
+        function renderGrid(birthDate, lang) {
             const today = new Date();
             const diffInMs = today - birthDate;
             const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
             let livedWeeksCount = Math.floor(diffInDays / 7);
             livedWeeksCount = clamp(livedWeeksCount, 0, totalWeeks);
 
-            const range = getRangeConfig(rangeKey, livedWeeksCount);
-
             gridEl.innerHTML = "";
 
-            for (let i = 0; i < range.totalWeeks; i++) {
+            for (let i = 0; i < totalWeeks; i++) {
                 const cell = document.createElement("div");
                 cell.classList.add("cell");
 
                 const isYouthWeek = i < youthWeeks;
                 cell.classList.add(isYouthWeek ? "young" : "older");
 
-                if (i < range.visibleWeeks) {
+                if (i < livedWeeksCount) {
                     cell.classList.add("lived");
                 }
 
                 const weekNum = i + 1;
                 const weekStart = addDays(birthDate, i * 7);
                 const weekEnd = addDays(weekStart, 6);
-                const isLived = i < range.visibleWeeks;
+                const isLived = i < livedWeeksCount;
 
                 cell.addEventListener("click", () => {
                     const t = i18n[lang] || i18n.en;
@@ -572,34 +500,26 @@
                 gridEl.appendChild(cell);
             }
 
-            countEl.textContent = range.visibleWeeks;
-            percentageEl.textContent = ((range.visibleWeeks / range.totalWeeks) * 100).toFixed(1);
+            countEl.textContent = livedWeeksCount;
+            percentageEl.textContent = ((livedWeeksCount / totalWeeks) * 100).toFixed(1);
             subtitleEl.textContent = (i18n[lang] || i18n.en).subtitle + formatDate(birthDate, lang);
-
-            const t = i18n[lang] || i18n.en;
-            const rangeLabel = range.key === "full" ? t.rangeFull : t.rangeAge0to18;
-            rangeSummary.textContent = `${t.selectedRange}${rangeLabel} (${range.visibleWeeks} / ${range.totalWeeks} weeks)`;
         }
 
         function updateSite() {
             const lang = languageSelect.value || getStoredLanguage();
             const birthDate = getBirthDateFromInput();
             const birthDateString = formatLocalDate(birthDate);
-            const rangeKey = rangeSelect.value || getStoredRange();
 
             localStorage.setItem(STORAGE_KEY_LANG, lang);
             localStorage.setItem(STORAGE_KEY_BIRTH, birthDateString);
-            localStorage.setItem(STORAGE_KEY_RANGE, rangeKey);
 
             setLanguage(lang);
             birthInput.value = birthDateString;
-            rangeSelect.value = rangeKey;
-            renderGrid(birthDate, lang, rangeKey);
+            renderGrid(birthDate, lang);
         }
 
         languageSelect.addEventListener("change", updateSite);
         birthInput.addEventListener("change", updateSite);
-        rangeSelect.addEventListener("change", updateSite);
         applyBtn.addEventListener("click", updateSite);
 
         modalClose.addEventListener("click", () => {
@@ -616,12 +536,10 @@
 
         const initialLang = getStoredLanguage();
         const initialBirth = getStoredBirth();
-        const initialRange = getStoredRange();
         languageSelect.value = initialLang;
         birthInput.value = initialBirth;
-        rangeSelect.value = initialRange;
         setLanguage(initialLang);
-        renderGrid(parseLocalDate(initialBirth), initialLang, initialRange);
+        renderGrid(parseLocalDate(initialBirth), initialLang);
     </script>
 </body>
 </html>
