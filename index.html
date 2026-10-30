@@ -319,10 +319,7 @@
                 closeBtn: "Close",
                 weekPrefix: "Week ",
                 statusLived: "Lived",
-                statusUnlived: "Unlived",
-                invalidDate: "1990-01-01",
-                yearSuffix: " years",
-                weekSuffix: " weeks"
+                statusUnlived: "Unlived"
             },
             es: {
                 title: "85 Años en Semanas",
@@ -336,10 +333,7 @@
                 closeBtn: "Cerrar",
                 weekPrefix: "Semana ",
                 statusLived: "Vivida",
-                statusUnlived: "Por vivir",
-                invalidDate: "1990-01-01",
-                yearSuffix: " años",
-                weekSuffix: " semanas"
+                statusUnlived: "Por vivir"
             },
             nl: {
                 title: "85 Jaar in Weken",
@@ -353,10 +347,7 @@
                 closeBtn: "Sluiten",
                 weekPrefix: "Week ",
                 statusLived: "Geleefd",
-                statusUnlived: "Nog niet geleefd",
-                invalidDate: "1990-01-01",
-                yearSuffix: " jaar",
-                weekSuffix: " weken"
+                statusUnlived: "Nog niet geleefd"
             }
         };
 
@@ -376,7 +367,33 @@
         const modalText = document.getElementById("modalText");
         const modalClose = document.getElementById("modalClose");
 
-        const defaultBirth = new Date("1990-01-01T00:00:00");
+        function parseLocalDate(dateString) {
+            const defaultDate = new Date(1990, 0, 1);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+                return defaultDate;
+            }
+
+            const [year, month, day] = dateString.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+
+            if (
+                Number.isNaN(date.getTime()) ||
+                date.getFullYear() !== year ||
+                date.getMonth() !== month - 1 ||
+                date.getDate() !== day
+            ) {
+                return defaultDate;
+            }
+
+            return date;
+        }
+
+        function formatLocalDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        }
 
         function getStoredLanguage() {
             const saved = localStorage.getItem(STORAGE_KEY_LANG);
@@ -385,9 +402,9 @@
 
         function getStoredBirth() {
             const saved = localStorage.getItem(STORAGE_KEY_BIRTH);
-            if (!saved) return defaultBirth.toISOString().slice(0, 10);
-            const date = new Date(`${saved}T00:00:00`);
-            return isNaN(date.getTime()) ? defaultBirth.toISOString().slice(0, 10) : saved;
+            if (!saved) return formatLocalDate(new Date(1990, 0, 1));
+            const parsed = parseLocalDate(saved);
+            return formatLocalDate(parsed);
         }
 
         function setLanguage(lang) {
@@ -426,11 +443,7 @@
 
         function getBirthDateFromInput() {
             const value = birthInput.value;
-            const parsed = value ? new Date(`${value}T00:00:00`) : new Date(defaultBirth);
-            if (isNaN(parsed.getTime())) {
-                return new Date(defaultBirth);
-            }
-            return parsed;
+            return parseLocalDate(value);
         }
 
         function renderGrid(birthDate, lang) {
@@ -474,16 +487,18 @@
         function updateSite() {
             const lang = languageSelect.value || getStoredLanguage();
             const birthDate = getBirthDateFromInput();
+            const birthDateString = formatLocalDate(birthDate);
 
             localStorage.setItem(STORAGE_KEY_LANG, lang);
-            localStorage.setItem(STORAGE_KEY_BIRTH, birthDate.toISOString().slice(0, 10));
+            localStorage.setItem(STORAGE_KEY_BIRTH, birthDateString);
 
             setLanguage(lang);
-            birthInput.value = birthDate.toISOString().slice(0, 10);
+            birthInput.value = birthDateString;
             renderGrid(birthDate, lang);
         }
 
         languageSelect.addEventListener("change", updateSite);
+        birthInput.addEventListener("change", updateSite);
         applyBtn.addEventListener("click", updateSite);
 
         modalClose.addEventListener("click", () => {
@@ -503,7 +518,7 @@
         languageSelect.value = initialLang;
         birthInput.value = initialBirth;
         setLanguage(initialLang);
-        renderGrid(new Date(`${initialBirth}T00:00:00`), initialLang);
+        renderGrid(parseLocalDate(initialBirth), initialLang);
     </script>
 </body>
 </html>
