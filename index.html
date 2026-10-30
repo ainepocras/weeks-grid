@@ -12,7 +12,10 @@
             --muted: #64748b;
             --border: #e2e8f0;
             --lived: #3b82f6;
-            --unlived: #e2e8f0;
+            --lived-young: #2563eb;
+            --lived-older: #1d4ed8;
+            --young: #bfdbfe;
+            --older: #e2e8f0;
             --shadow: rgba(15, 23, 42, 0.08);
         }
 
@@ -170,11 +173,19 @@
         }
 
         .cell {
-            background-color: var(--unlived);
+            background-color: var(--older);
             border-radius: 0.5px;
             cursor: pointer;
             transition: transform 0.12s ease, box-shadow 0.12s ease;
             min-width: 0;
+        }
+
+        .cell.young {
+            background-color: var(--young);
+        }
+
+        .cell.older {
+            background-color: var(--older);
         }
 
         .cell:hover {
@@ -185,6 +196,14 @@
 
         .cell.lived {
             background-color: var(--lived) !important;
+        }
+
+        .cell.lived.young {
+            background-color: var(--lived-young) !important;
+        }
+
+        .cell.lived.older {
+            background-color: var(--lived-older) !important;
         }
 
         .modal-overlay {
@@ -298,6 +317,10 @@
 
         <div class="legend" id="legendContainer">
             <div class="legend-item">
+                <div class="legend-box" style="background-color: #2563eb;"></div>
+                <span id="legendYoung">Age 0–18</span>
+            </div>
+            <div class="legend-item">
                 <div class="legend-box" style="background-color: #3b82f6;"></div>
                 <span id="legendLived">Lived Weeks</span>
             </div>
@@ -333,6 +356,7 @@
             en: {
                 title: "85 Years in Weeks",
                 subtitle: "Week 1 starts on your birthdate: ",
+                legendYoung: "Age 0–18",
                 legendLived: "Lived Weeks",
                 legendUnlived: "Unlived Weeks",
                 statsLived: "Lived:",
@@ -351,6 +375,7 @@
             es: {
                 title: "85 Años en Semanas",
                 subtitle: "La semana 1 comienza en tu fecha de nacimiento: ",
+                legendYoung: "Edad 0–18",
                 legendLived: "Semanas vividas",
                 legendUnlived: "Semanas por vivir",
                 statsLived: "Vividas:",
@@ -369,6 +394,7 @@
             nl: {
                 title: "85 Jaar in Weken",
                 subtitle: "Week 1 begint op je geboortedatum: ",
+                legendYoung: "Leeftijd 0–18",
                 legendLived: "Geleefde weken",
                 legendUnlived: "Nog te leven weken",
                 statsLived: "Geleefd:",
@@ -455,6 +481,7 @@
             const t = i18n[lang] || i18n.en;
             document.documentElement.lang = lang;
             document.getElementById("mainTitle").textContent = t.title;
+            document.getElementById("legendYoung").textContent = t.legendYoung;
             document.getElementById("legendLived").textContent = t.legendLived;
             document.getElementById("legendUnlived").textContent = t.legendUnlived;
             document.getElementById("statsLabel").textContent = t.statsLived;
@@ -529,6 +556,9 @@
             for (let i = 0; i < range.totalWeeks; i++) {
                 const cell = document.createElement("div");
                 cell.classList.add("cell");
+
+                const isYouthWeek = i < youthWeeks;
+                cell.classList.add(isYouthWeek ? "young" : "older");
 
                 if (i < range.visibleWeeks) {
                     cell.classList.add("lived");
