@@ -315,7 +315,11 @@
         <div class="legend" id="legendContainer">
             <div class="legend-item">
                 <div class="legend-box" style="background-color: #3b82f6;"></div>
-                <span id="legendLived">Weeks Lived (0-18)</span>
+                <span id="legendLivedYoung">Weeks Lived (0-18)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background-color: #63b76b;"></div>
+                <span id="legendLivedAdult">Weeks Lived (18-today)</span>
             </div>
             <div class="legend-item">
                 <div class="legend-box" style="background-color: #d7f5d0;"></div>
@@ -345,7 +349,8 @@
             en: {
                 title: "85 Years in Weeks",
                 subtitle: "Week 1 starts on your birthdate: ",
-                legendLived: "Weeks Lived (0-18)",
+                legendLivedYoung: "Weeks Lived (0-18)",
+                legendLivedAdult: "Weeks Lived (18-today)",
                 legendUnlived: "Weeks to Live",
                 statsLived: "Lived:",
                 languageLabel: "Language",
@@ -360,7 +365,8 @@
             es: {
                 title: "85 Años en Semanas",
                 subtitle: "La semana 1 comienza en tu fecha de nacimiento: ",
-                legendLived: "Semanas vividas (0-18)",
+                legendLivedYoung: "Semanas vividas (0-18)",
+                legendLivedAdult: "Semanas vividas (18-hoy)",
                 legendUnlived: "Semanas por vivir",
                 statsLived: "Vividas:",
                 languageLabel: "Idioma",
@@ -375,7 +381,8 @@
             nl: {
                 title: "85 Jaar in Weken",
                 subtitle: "Week 1 begint op je geboortedatum: ",
-                legendLived: "Geleefde weken (0-18)",
+                legendLivedYoung: "Geleefde weken (0-18)",
+                legendLivedAdult: "Geleefde weken (18-heden)",
                 legendUnlived: "Nog te leven weken",
                 statsLived: "Geleefd:",
                 languageLabel: "Taal",
@@ -451,7 +458,8 @@
             const t = i18n[lang] || i18n.en;
             document.documentElement.lang = lang;
             document.getElementById("mainTitle").textContent = t.title;
-            document.getElementById("legendLived").textContent = t.legendLived;
+            document.getElementById("legendLivedYoung").textContent = t.legendLivedYoung;
+            document.getElementById("legendLivedAdult").textContent = t.legendLivedAdult;
             document.getElementById("legendUnlived").textContent = t.legendUnlived;
             document.getElementById("statsLabel").textContent = t.statsLived;
             document.getElementById("languageLabel").textContent = t.languageLabel;
