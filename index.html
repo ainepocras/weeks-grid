@@ -305,8 +305,8 @@
             </label>
 
             <label class="field" for="birthInput">
-                <span id="birthLabel">Birthdate</span>
-                <input id="birthInput" type="date" aria-label="Birthdate">
+                <span id="birthLabel">Birthdate (DD-MM-YYYY)</span>
+                <input id="birthInput" type="text" inputmode="numeric" placeholder="DD-MM-YYYY" pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}" maxlength="10" aria-label="Birthdate, day-month-year" title="Enter your birthdate as DD-MM-YYYY" required>
             </label>
 
             <button id="applyBtn" type="button">Apply</button>
@@ -354,13 +354,14 @@
                 legendUnlived: "Weeks to Live",
                 statsLived: "Lived:",
                 languageLabel: "Language",
-                birthLabel: "Birthdate",
+                birthLabel: "Birthdate (DD-MM-YYYY)",
                 applyBtn: "Apply",
                 closeBtn: "Close",
                 weekPrefix: "Week ",
                 statusLived: "Lived",
                 statusUnlived: "Unlived",
-                ageLabel: "Age:"
+                ageLabel: "Age:",
+                invalidDate: "Enter a valid date as DD-MM-YYYY."
             },
             es: {
                 title: "85 Años en Semanas",
@@ -370,13 +371,14 @@
                 legendUnlived: "Semanas por vivir",
                 statsLived: "Vividas:",
                 languageLabel: "Idioma",
-                birthLabel: "Fecha de nacimiento",
+                birthLabel: "Fecha de nacimiento (DD-MM-AAAA)",
                 applyBtn: "Aplicar",
                 closeBtn: "Cerrar",
                 weekPrefix: "Semana ",
                 statusLived: "Vivida",
                 statusUnlived: "Por vivir",
-                ageLabel: "Edad:"
+                ageLabel: "Edad:",
+                invalidDate: "Introduce una fecha válida como DD-MM-AAAA."
             },
             nl: {
                 title: "85 Jaar in Weken",
@@ -386,13 +388,14 @@
                 legendUnlived: "Nog te leven weken",
                 statsLived: "Geleefd:",
                 languageLabel: "Taal",
-                birthLabel: "Geboortedatum",
+                birthLabel: "Geboortedatum (DD-MM-JJJJ)",
                 applyBtn: "Toepassen",
                 closeBtn: "Sluiten",
                 weekPrefix: "Week ",
                 statusLived: "Geleefd",
                 statusUnlived: "Nog niet geleefd",
-                ageLabel: "Leeftijd:"
+                ageLabel: "Leeftijd:",
+                invalidDate: "Voer een geldige datum in als DD-MM-JJJJ."
             }
         };
 
@@ -415,24 +418,25 @@
         const modalClose = document.getElementById("modalClose");
 
         function parseLocalDate(dateString) {
-            const defaultDate = new Date(1990, 0, 1);
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-                return defaultDate;
+            if (typeof dateString !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+                return null;
             }
 
-            const [year, month, day] = dateString.split('-').map(Number);
+            const [year, month, day] = dateString.split("-").map(Number);
             const date = new Date(year, month - 1, day);
-
-            if (
-                Number.isNaN(date.getTime()) ||
-                date.getFullYear() !== year ||
-                date.getMonth() !== month - 1 ||
-                date.getDate() !== day
-            ) {
-                return defaultDate;
+            if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+                return null;
             }
 
             return date;
+        }
+
+        function parseEuropeanDate(dateString) {
+            const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(dateString.trim());
+            if (!match) return null;
+
+            const [, day, month, year] = match;
+            return parseLocalDate(`${year}-${month}-${day}`);
         }
 
         function formatLocalDate(date) {
@@ -442,6 +446,13 @@
             return `${year}-${month}-${day}`;
         }
 
+        function formatEuropeanDate(date) {
+            const day = String(date.getDate()).padStart(2, "0");
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`;
+        }
+
         function getStoredLanguage() {
             const saved = localStorage.getItem(STORAGE_KEY_LANG);
             return i18n[saved] ? saved : "en";
@@ -449,9 +460,7 @@
 
         function getStoredBirth() {
             const saved = localStorage.getItem(STORAGE_KEY_BIRTH);
-            if (!saved) return formatLocalDate(new Date(1990, 0, 1));
-            const parsed = parseLocalDate(saved);
-            return formatLocalDate(parsed);
+            return parseLocalDate(saved) || new Date(1990, 0, 1);
         }
 
         function setLanguage(lang) {
@@ -464,14 +473,16 @@
             document.getElementById("statsLabel").textContent = t.statsLived;
             document.getElementById("languageLabel").textContent = t.languageLabel;
             document.getElementById("birthLabel").textContent = t.birthLabel;
+            document.getElementById("applyBtn").textContent = t.applyBtn;
             document.getElementById("modalClose").textContent = t.closeBtn;
             document.title = t.title;
             languageSelect.value = lang;
+            birthInput.title = t.invalidDate;
         }
 
         function formatDate(date, lang) {
-            const localeMap = { en: "en-US", es: "es-ES", nl: "nl-NL" };
-            return date.toLocaleDateString(localeMap[lang] || "en-US", {
+            const localeMap = { en: "en-GB", es: "es-ES", nl: "nl-NL" };
+            return date.toLocaleDateString(localeMap[lang] || "en-GB", {
                 month: "short",
                 day: "numeric",
                 year: "numeric"
@@ -488,28 +499,19 @@
             return Math.min(Math.max(value, min), max);
         }
 
-        function getBirthDateFromInput() {
-            return parseLocalDate(birthInput.value);
-        }
-
         function getAgeYears(birthDate) {
             const now = new Date();
             let years = now.getFullYear() - birthDate.getFullYear();
-            const hasNotHadBirthday =
-                now.getMonth() < birthDate.getMonth() ||
+            const hasNotHadBirthday = now.getMonth() < birthDate.getMonth() ||
                 (now.getMonth() === birthDate.getMonth() && now.getDate() < birthDate.getDate());
-
             if (hasNotHadBirthday) years -= 1;
             return Math.max(years, 0);
         }
 
         function renderGrid(birthDate, lang) {
             const today = new Date();
-            const diffInMs = today - birthDate;
-            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-            let livedWeeksCount = Math.floor(diffInDays / 7);
-            livedWeeksCount = clamp(livedWeeksCount, 0, totalWeeks);
-
+            const diffInDays = Math.floor((today - birthDate) / (1000 * 60 * 60 * 24));
+            const livedWeeksCount = clamp(Math.floor(diffInDays / 7), 0, totalWeeks);
             const t = i18n[lang] || i18n.en;
             const ageYears = getAgeYears(birthDate);
             ageInfoEl.textContent = `• ${t.ageLabel} ${ageYears} ${ageYears === 1 ? "year" : "years"}`;
@@ -518,27 +520,21 @@
 
             for (let i = 0; i < totalWeeks; i++) {
                 const cell = document.createElement("div");
-                cell.classList.add("cell");
-
-                const isYouthWeek = i < youthWeeks;
-                cell.classList.add(isYouthWeek ? "young" : "older");
-
-                if (i < livedWeeksCount) {
-                    cell.classList.add("lived");
-                }
+                cell.classList.add("cell", i < youthWeeks ? "young" : "older");
+                const isLived = i < livedWeeksCount;
+                if (isLived) cell.classList.add("lived");
 
                 const weekNum = i + 1;
                 const weekStart = addDays(birthDate, i * 7);
                 const weekEnd = addDays(weekStart, 6);
-                const isLived = i < livedWeeksCount;
-                const label = `${t.weekPrefix}${weekNum} — ${formatDate(weekStart, lang)} to ${formatDate(weekEnd, lang)} (${isLived ? t.statusLived : t.statusUnlived})`;
-
+                const status = isLived ? t.statusLived : t.statusUnlived;
+                const label = `${t.weekPrefix}${weekNum} — ${formatDate(weekStart, lang)} to ${formatDate(weekEnd, lang)} (${status})`;
                 cell.setAttribute("title", label);
                 cell.setAttribute("aria-label", label);
 
                 cell.addEventListener("click", () => {
                     modalTitle.textContent = t.weekPrefix + weekNum;
-                    modalText.innerHTML = `${formatDate(weekStart, lang)} – ${formatDate(weekEnd, lang)}<br><br><strong>Status:</strong> ${isLived ? t.statusLived : t.statusUnlived}`;
+                    modalText.innerHTML = `${formatDate(weekStart, lang)} – ${formatDate(weekEnd, lang)}<br><br><strong>Status:</strong> ${status}`;
                     modalOverlay.classList.add("active");
                     modalOverlay.setAttribute("aria-hidden", "false");
                 });
@@ -548,22 +544,28 @@
 
             countEl.textContent = livedWeeksCount;
             percentageEl.textContent = ((livedWeeksCount / totalWeeks) * 100).toFixed(1);
-            subtitleEl.textContent = (i18n[lang] || i18n.en).subtitle + formatDate(birthDate, lang);
+            subtitleEl.textContent = t.subtitle + formatDate(birthDate, lang);
         }
 
         function updateSite() {
             const lang = languageSelect.value || getStoredLanguage();
-            const birthDate = getBirthDateFromInput();
-            const birthDateString = formatLocalDate(birthDate);
+            const birthDate = parseEuropeanDate(birthInput.value);
+            const t = i18n[lang] || i18n.en;
 
+            if (!birthDate) {
+                birthInput.setCustomValidity(t.invalidDate);
+                birthInput.reportValidity();
+                return;
+            }
+
+            birthInput.setCustomValidity("");
             localStorage.setItem(STORAGE_KEY_LANG, lang);
-            localStorage.setItem(STORAGE_KEY_BIRTH, birthDateString);
-
+            localStorage.setItem(STORAGE_KEY_BIRTH, formatLocalDate(birthDate));
             setLanguage(lang);
-            birthInput.value = birthDateString;
             renderGrid(birthDate, lang);
         }
 
+        birthInput.addEventListener("input", () => birthInput.setCustomValidity(""));
         languageSelect.addEventListener("change", updateSite);
         birthInput.addEventListener("change", updateSite);
         applyBtn.addEventListener("click", updateSite);
@@ -573,8 +575,8 @@
             modalOverlay.setAttribute("aria-hidden", "true");
         });
 
-        modalOverlay.addEventListener("click", (e) => {
-            if (e.target === modalOverlay) {
+        modalOverlay.addEventListener("click", (event) => {
+            if (event.target === modalOverlay) {
                 modalOverlay.classList.remove("active");
                 modalOverlay.setAttribute("aria-hidden", "true");
             }
@@ -583,9 +585,9 @@
         const initialLang = getStoredLanguage();
         const initialBirth = getStoredBirth();
         languageSelect.value = initialLang;
-        birthInput.value = initialBirth;
+        birthInput.value = formatEuropeanDate(initialBirth);
         setLanguage(initialLang);
-        renderGrid(parseLocalDate(initialBirth), initialLang);
+        renderGrid(initialBirth, initialLang);
     </script>
 </body>
 </html>
